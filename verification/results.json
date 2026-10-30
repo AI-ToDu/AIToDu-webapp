@@ -1,0 +1,33 @@
+{
+  "observedOn": "2026-10-30",
+  "timezone": "America/Lima",
+  "data": "fictional academic demo",
+  "automated": {
+    "webapp": 19,
+    "fakeApi": 16,
+    "landing": 2
+  },
+  "browser": {
+    "receiving": "2 of 4 ordered units",
+    "salePEN": 290,
+    "grossContributionPEN": 70,
+    "inventoryAtCostPEN": 1510,
+    "dispatch": "DELIVERED with recipient",
+    "afterServerRestart": {
+      "version": 2,
+      "sales": 1,
+      "receipts": 1,
+      "delivered": 1
+    },
+    "staticOnly": "MEM-001 persisted in IndexedDB after reload under /ai-todu-webapp/",
+    "mobile": "375 px viewport; no whole-page horizontal overflow; table scrolls internally",
+    "locales": [
+      "en_US",
+      "es_419"
+    ],
+    "landing": "menu, localized accessibility labels, terms dialog, real screenshot and working CTA",
+    "logoutFailure": "local session removed and login shown after injected API 503",
+    "logoutFixtureServerSessionsRetained": 1
+  },
+  "scope": "Local verification; production publication and human research/collaboration evidence remain pending."
+}

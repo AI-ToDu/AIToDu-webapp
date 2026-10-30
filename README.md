@@ -1,82 +1,57 @@
-# 🚀 AI-ToDu - Sistema Nervioso Logístico B2B
+# AI-ToDu · Logistics workspace
 
-![Angular](https://img.shields.io/badge/Angular-DD0031?style=for-the-badge&logo=angular&logoColor=white)
-![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white)
-![GitHub Pages](https://img.shields.io/badge/GitHub%20Pages-222222?style=for-the-badge&logo=GitHub%20Pages&logoColor=white)
+TB1 correction · v0.2.0 · Angular 22 + Angular Material · **en_US / es_419**.
 
-**AI-ToDu** es una plataforma integral SaaS (Software as a Service) B2B diseñada para optimizar y conectar en tiempo real las ventas, los inventarios y los despachos logísticos de empresas y comercios.
+The workspace connects receiving, inventory movements, sales, dispatches, returns and derived metrics through a persistent **Fake REST API**. Use fictional data; no actual payments or fiscal documents are issued.
 
-### 🌍 [Ver Demo en Vivo (GitHub Pages)](https://ai-todu.github.io/AIToDu-webapp/)
-
-> **Nota para evaluación:** Este repositorio contiene la capa Frontend (MVP). Actualmente utiliza un entorno de simulación (Mock/Fake API) implementado con Angular Signals para manejar el estado en memoria. La arquitectura está 100% preparada para consumir servicios REST de un Backend (Spring Boot/Azure) en la siguiente fase.
-
----
-
-## 🏗️ Arquitectura del Proyecto
-
-El proyecto ha sido construido utilizando **Domain-Driven Design (DDD)** y los estándares más modernos de **Angular 17+** (Standalone Components, Signals, y Control Flow).
-
-La aplicación está dividida en 5 **Bounded Contexts** (Módulos de Negocio) totalmente desacoplados, más un *Shared Kernel*:
-
-*   🔐 **IAM (Identity & Access Management):** Gestión de usuarios, autenticación y protección de rutas (Auth Guards).
-*   📊 **Reporting:** Dashboard gerencial interactivo con KPIs financieros y operativos.
-*   📦 **Inventory:** Catálogo central (Core Domain). Gestión de SKUs, entradas de mercadería y control de stock físico.
-*   🛒 **Sales:** Módulo POS (Punto de Venta). Carrito de compras dinámico, validación de stock en tiempo real y generación de boletas electrónicas.
-*   🚚 **Logistics:** Tablero Kanban interactivo para el control de manifiestos, asignación de vehículos y seguimiento de entregas.
-*   ⚙️ **Shared Kernel:** Motor base (Manejo de errores, adaptadores HTTP genéricos, Layouts y sistema i18n).
-
-### Estructura de Directorios (DDD)
-Cada módulo implementa una estricta separación por capas:
-```text
-src/app/
- ├── {modulo}/
- │   ├── application/     # Stores (Manejo de estado reactivo con Signals)
- │   ├── domain/          # Entidades puras y reglas de negocio
- │   ├── infrastructure/  # Consumo de APIs, DTOs y Traductores (Assemblers)
- │   └── presentation/    # Vistas y Componentes UI (HTML/CSS embebido)
+```sh
+npm ci
+npm run demo
 ```
 
----
+Open `http://127.0.0.1:8850/?api=http`. This builds the app and serves both the interface and the local HTTP adapter. Node 24+ is required. State persists in `.demo-data/state.json`, excluded from Git; reload and server restart preserve accepted transactions. The local HTTP choice survives hash navigation/reload within the tab.
 
-## 🛠️ Tecnologías y Prácticas Implementadas
+For static hosting run `npm run build:pages`. On HTTPS/localhost the Service Worker intercepts same-origin `/api/v1` requests and persists to IndexedDB. Data is local to that browser/origin, can be cleared, and is not shared across devices. The Pages API URL is not a remote backend for curl. First load requires assets/worker initialization; failures show a visible startup error.
 
-*   **Framework:** Angular (v17+) con Standalone Components.
-*   **Reactividad:** Angular Signals (para el manejo de estado sincrónico y libre de RxJS overhead).
-*   **Diseño:** UI/UX corporativo, Responsive, Modal interactions (sin alerts nativos).
-*   **Internacionalización (i18n):** Soporte multi-idioma estructurado.
+## Demo accounts
 
----
+| Role | Email | Access |
+| --- | --- | --- |
+| Administrator | admin@demo.ai-todu.test | All demo sections and metrics. |
+| Warehouse | warehouse@demo.ai-todu.test | Inventory, movements, purchasing and notifications. |
+| Sales | sales@demo.ai-todu.test | Inventory, sales, returns and notifications. |
+| Logistics | logistics@demo.ai-todu.test | Inventory, dispatches and notifications. |
 
-## 🚀 Despliegue Local (Para Desarrolladores)
+All four intentionally public demo accounts use **DemoOnly2026!**. These identities, hashes, session storage and authorization checks are demonstration infrastructure, not production security.
 
-Si deseas clonar y correr este proyecto en tu entorno local:
+## Review the integrated flow
 
-1. Clona el repositorio:
-   ```bash
-   git clone https://github.com/AI-ToDu/AIToDu-webapp.git
-   ```
-2. Instala las dependencias:
-   ```bash
-   cd AIToDu-webapp
-   npm install
-   ```
-3. Ejecuta el servidor de desarrollo:
-   ```bash
-   ng serve
-   ```
-4. Abre tu navegador en `http://localhost:4200/`.
+1. Purchasing: create an order for four rice units and receive two. State becomes partially received; stock changes 8 → 10.
+2. Sales: sell two units. Stock changes 10 → 8; historical demo receipt records PEN 290.
+3. Dispatches: select that sale, driver, vehicle and destination. Start route, then confirm a recipient. A dispatch never issues stock a second time.
+4. Overview: net sales PEN 290, gross contribution PEN 70, inventory at recorded cost PEN 1,510. Reload retains the result. These are synthetic data, not business outcomes.
+5. Try excess receiving, oversale, damaged/quarantined product, repeated cancellation, occupied resources and a direct unauthorized metrics request. Rejected commands leave no partial state.
 
----
+![Local HTTP flow, synthetic demo data](docs/evidence/overview.jpg)
 
-## 👥 Equipo de Desarrollo
+## Verification and scope
 
-Este proyecto fue desarrollado colaborativamente por:
+```sh
+npm test
+npm run build
+npm run build:pages
+```
 
-*   **Kevin** - Arquitectura Base, Shared Kernel y Enrutamiento.
-*   **Fernando** - Módulo de Inventario.
-*   **Darikson** - Módulo POS (Ventas) y Dashboard Gerencial.
-*   **Luis** - Módulo de Logística (Despachos).
-*   **Carlos** - Módulo IAM (Seguridad), i18n y Documentación.
+Tests cover domain rules, direct authorization/tenant isolation, actual HTTP concurrency, restart persistence, receipt migration, the 35-table SQL design, translation coverage and vendored-source integrity. Production compilation retains the original bundle budget. UI is lazy by domain, responsive, labelled and supports reduced motion; user research and a full accessibility audit remain pending.
 
----
-*Powered by AI-ToDu Platform © 2024*
+The [35-table DDL](database/schema.sql) is a normalized relational migration target, validated in SQLite. The running prototype uses 35 JSON collections. Full lot/location/variant workflows, multiple delivery stops/failed attempts, customer administration UI, employee activation/recovery, subscription/fiscal/payment integrations and Java/PostgreSQL production services are not complete.
+
+## Canonical mock source
+
+[ai-todu-fake-api](https://github.com/AI-ToDu/ai-todu-fake-api/tree/fix/tb1-readiness) owns the engine, local adapter, OpenAPI and relational baseline. [mock-provenance.json](mock-provenance.json) pins the exact source commit and normalized file hashes. After committing changes there, run `npm run mock:sync -- ../ai-todu-fake-api`, then tests/build here. Do not independently patch a vendored file. [Bundled OpenAPI](public/mock/openapi.json) is the implemented demo contract.
+
+## Branches and publication
+
+`fix/tb1-readiness` contains four correction blocks, one commit each. `develop` starts at the preserved original main baseline; review the fix PR before integration. Release from reviewed `main`. Verification runs on fix/PR; Pages deployment is restricted to main. The current public site still uses the old `gh-pages` source until review and an explicit switch to GitHub Actions. There is no automatic production deployment from this fix branch.
+
+Links: [Landing](https://ai-todu.github.io/ai-todu-platform/) · [Workspace](https://ai-todu.github.io/ai-todu-webapp/) · [Report](https://github.com/AI-ToDu/ai-todu-report/tree/fix/tb1-readiness) · [Review checklist](REVIEW.md).

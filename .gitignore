@@ -42,3 +42,7 @@ __screenshots__/
 # System files
 .DS_Store
 Thumbs.db
+
+# Local academic demo state and verification artifacts
+.demo-data/
+verification/screenshots/
