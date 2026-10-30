@@ -1,4 +1,2 @@
-export const environment = {
-  production: false,
-  platformProviderApiBaseUrl: 'http://localhost:8080/api/v1',
-};
+// The demo uses same-origin HTTP contracts; transport is selected at bootstrap.
+export const environment = { production: false, apiPath: 'api/v1/' };
