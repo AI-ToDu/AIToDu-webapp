@@ -16,7 +16,9 @@ import { I18n } from './shared/application/i18n';
     RouterLinkActive,
     MatSidenavModule,
   ],
-  template: `<a class="skip-link" href="#main-content" (click)="focusMain($event)">{{ i.t('back') }}</a
+  template: `<a class="skip-link" href="#main-content" (click)="focusMain($event)">{{
+      i.t('back')
+    }}</a
     ><mat-sidenav-container class="shell"
       ><mat-sidenav
         #drawer
@@ -72,7 +74,10 @@ import { I18n } from './shared/application/i18n';
     >`,
 })
 export class AppComponent {
- focusMain(event:Event){event.preventDefault();document.getElementById('main-content')?.focus();}
+  focusMain(event: Event) {
+    event.preventDefault();
+    document.getElementById('main-content')?.focus();
+  }
   readonly session = inject(Session);
   readonly i = inject(I18n);
   private router = inject(Router);
@@ -92,7 +97,7 @@ export class AppComponent {
     this.mobile.set(matchMedia('(max-width: 960px)').matches);
   }
   async logout() {
-    await this.session.logout();
+    await this.session.logout().catch(() => undefined);
     await this.router.navigate(['/login']);
   }
 }

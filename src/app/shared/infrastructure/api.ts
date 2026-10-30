@@ -12,7 +12,12 @@ export class Api {
       return await firstValueFrom(
         this.http.request<T>(method, this.base + path, {
           ...(body !== undefined ? { body } : {}),
-          headers: { ...(token?{Authorization:`Bearer ${token}`} : {}), ...(sessionStorage.getItem('ai-todu-transport')==='http'?{'X-AI-ToDu-Transport':'http'}:{}) },
+          headers: {
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+            ...(sessionStorage.getItem('ai-todu-transport') === 'http'
+              ? { 'X-AI-ToDu-Transport': 'http' }
+              : {}),
+          },
         }),
       );
     } catch (e) {

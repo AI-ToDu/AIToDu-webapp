@@ -1,0 +1,17 @@
+{
+  "sourceRepository": "https://github.com/AI-ToDu/ai-todu-fake-api",
+  "sourceCommit": "5bb7a446d523c2fbf051231fccc352365eb021f1",
+  "version": "0.2.0",
+  "normalization": "UTF-8, LF line endings",
+  "files": {
+    "public/mock/engine.mjs": "aa6cfa138ffa127c04a203917599ea40115c9f6dcf191a69b02196bcc88bfdd5",
+    "public/mock/value-objects.mjs": "7437a2d82bb82861ef8105a94a8fa198298e7cfa5f836effbfcf4ae47b2d1e42",
+    "public/mock/domain/inventory-item.mjs": "2fdb4e2a7612c170baecca629e1ef53c54a4007abd80e2305502e3843532d815",
+    "public/mock/domain/sale-summary.mjs": "1893b0845c32ed15a4e250272d435f81349a043b1752dae6f749aaf04b85d29c",
+    "public/mock/domain/dispatch-manifest.mjs": "7ac5d651885cf31caf23e587730355e5aaa1997da7e52d739baa1075b4b54750",
+    "tools/demo-server.mjs": "c4758e0a042a419447cd6c7843f1815e2115a2e275941f7f5dda0bc09d37f3bc",
+    "database/schema.sql": "11c1854860b1237ad65e52f04c2bcb1e5d771f5d36ba29e945f30bf761d639f5",
+    "database/model.json": "2147b32be2384827a1dcb99c25791f43afe45168e6334468d71b24244a98c5f2",
+    "public/mock/openapi.json": "dc1cae73fa87a2b5d8d23d62ca66bab08bd59e00a5021cfe0c905ac4167905e9"
+  }
+}

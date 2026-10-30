@@ -60,7 +60,8 @@ import { Api, Session } from '../../shared/infrastructure/api';
         @if (!register) {
           <div class="demo-login">
             <strong>{{ i.t('demoAccess') }}</strong
-            ><code>{{demoEmail}}</code><code>DemoOnly2026!</code>
+            ><code>{{ demoEmail }}</code
+            ><code>DemoOnly2026!</code>
           </div>
         }
         <p class="auth-switch">
@@ -74,7 +75,10 @@ import { Api, Session } from '../../shared/infrastructure/api';
   </div>`,
 })
 export class AuthPage {
- readonly demoEmail=new URLSearchParams(location.search).get('role')==='warehouse'?'warehouse@demo.ai-todu.test':'admin@demo.ai-todu.test';
+  readonly demoEmail =
+    new URLSearchParams(location.search).get('role') === 'warehouse'
+      ? 'warehouse@demo.ai-todu.test'
+      : 'admin@demo.ai-todu.test';
   readonly i = inject(I18n);
   private api = inject(Api);
   private session = inject(Session);
