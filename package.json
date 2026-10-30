@@ -1,20 +1,26 @@
 {
   "name": "front-end-aito-du",
-  "version": "0.0.0",
+  "version": "0.2.0",
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
-    "test": "ng test"
+    "test": "node --test tools/*.test.mjs",
+    "demo": "npm run build && node tools/demo-server.mjs",
+    "demo:serve": "node tools/demo-server.mjs",
+    "check": "npm test && npm run build",
+    "build:pages": "ng build --base-href /ai-todu-webapp/"
   },
   "private": true,
   "packageManager": "npm@11.19.0",
   "dependencies": {
+    "@angular/cdk": "^22.2.5",
     "@angular/common": "^22.2.0",
     "@angular/compiler": "^22.2.0",
     "@angular/core": "^22.2.0",
     "@angular/forms": "^22.2.0",
+    "@angular/material": "^22.2.5",
     "@angular/platform-browser": "^22.2.0",
     "@angular/router": "^22.2.0",
     "rxjs": "~7.8.0",
