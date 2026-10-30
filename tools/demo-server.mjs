@@ -11,7 +11,7 @@ export async function createDemoServer({
   let state;
   try {
     state = JSON.parse(await readFile(dataFile, 'utf8'));
-    if (state.version !== 1) throw new Error('Unsupported persisted demo version');
+    if (![1, 2].includes(state.version)) throw new Error('Unsupported persisted demo version');
   } catch (e) {
     if (e.code !== 'ENOENT') throw e;
     state = await seed();

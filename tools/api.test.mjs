@@ -130,7 +130,7 @@ test('sale updates metrics, movements and historical receipt; cancellation resto
   assert.equal(f.call('GET', '/metrics').body.revenue, 290);
   assert.equal(f.call('GET', '/metrics').body.grossMargin, 70);
   assert.equal(f.state.products[0].quantity, 6);
-  assert.equal(f.state.receipts_sales[0].total, 290);
+  assert.equal(f.state.sales_receipts[0].total, 290);
   assert.equal(f.call('POST', `/sales/${sale.id}/cancel`).status, 200);
   assert.equal(f.state.products[0].quantity, 8);
   assert.equal(f.call('POST', `/sales/${sale.id}/cancel`).status, 409);
@@ -191,6 +191,8 @@ test('dispatch groups actual sales, prevents duplicate dispatch and enforces tra
     200,
   );
   assert.equal(f.state.delivery_attempts.length, 1);
+  assert.equal(f.call('PATCH', `/dispatches/${d.id}`, {}).status, 409);
+  assert.equal(f.state.dispatches.find((x) => x.id === d.id).status, 'DELIVERED');
 });
 test('return limit and restock disposition keep stock and revenue consistent', async () => {
   const f = await fixture();
@@ -268,4 +270,67 @@ test('HTTP transport persists a completed transaction across server restart and 
     await new Promise((resolve) => server.close(resolve));
     await rm(directory, { recursive: true, force: true });
   }
+});
+
+test('returns cannot race a dispatch and returned sales are excluded from the dispatch queue', async () => {
+  const f = await fixture();
+  const sale = f.call('POST', '/sales', { lines: [{ productId: 'p-rice', quantity: 2 }] }).body;
+  const line = f.state.sale_lines[0];
+  const body = {
+    saleId: sale.id,
+    saleLineId: line.id,
+    quantity: 1,
+    disposition: 'RESTOCK',
+    reason: 'Demo return',
+  };
+  const dispatch = f.call('POST', '/dispatches', {
+    saleIds: [sale.id],
+    driverId: 'driver-1',
+    vehicleId: 'vehicle-1',
+    destination: 'Demo destination 123',
+  }).body;
+  assert.equal(f.call('POST', '/returns', body).status, 409);
+  f.call('PATCH', `/dispatches/${dispatch.id}`, { status: 'IN_TRANSIT' });
+  f.call('PATCH', `/dispatches/${dispatch.id}`, {
+    status: 'DELIVERED',
+    recipient: 'Demo recipient',
+  });
+  assert.equal(f.call('POST', '/returns', body).status, 201);
+  const sale2 = f.call('POST', '/sales', { lines: [{ productId: 'p-rice', quantity: 1 }] }).body;
+  const line2 = f.state.sale_lines.find((x) => x.saleId === sale2.id);
+  assert.equal(
+    f.call('POST', '/returns', { ...body, saleId: sale2.id, saleLineId: line2.id }).status,
+    201,
+  );
+  assert.ok(!f.call('GET', '/dispatch-candidates').body.items.some((x) => x.id === sale2.id));
+  assert.equal(
+    f.call('POST', '/dispatches', {
+      saleIds: [sale2.id],
+      driverId: 'driver-1',
+      vehicleId: 'vehicle-1',
+      destination: 'Demo destination 123',
+    }).status,
+    409,
+  );
+});
+test('existing v1 demo records migrate without losing historical receipts', async () => {
+  const f = await fixture();
+  f.call('POST', '/sales', { lines: [{ productId: 'p-rice', quantity: 1 }] });
+  const old = structuredClone(f.state);
+  old.version = 1;
+  old.receipts_sales = old.sales_receipts;
+  delete old.sales_receipts;
+  const result = handle(
+    old,
+    'POST',
+    '/auth/login',
+    await normalizeBody(
+      { email: 'admin@demo.ai-todu.test', password: 'DemoOnly2026!' },
+      '/auth/login',
+    ),
+  );
+  assert.equal(result.status, 200);
+  assert.equal(result.state.version, 2);
+  assert.equal(result.state.sales_receipts.length, 1);
+  assert.equal(result.state.sales_receipts[0].number, 'DEMO-SO-0001');
 });

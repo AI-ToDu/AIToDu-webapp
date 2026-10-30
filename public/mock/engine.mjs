@@ -27,7 +27,7 @@ export const tables = {
     'receipts',
     'receipt_lines',
   ],
-  sales: ['customers', 'sales', 'sale_lines', 'payments', 'receipts_sales'],
+  sales: ['customers', 'sales', 'sale_lines', 'payments', 'sales_receipts'],
   logistics: [
     'drivers',
     'vehicles',
@@ -40,58 +40,11 @@ export const tables = {
   returns: ['returns', 'return_lines'],
   notifications: ['notifications'],
 };
-export class DomainError extends Error {
-  constructor(code, status = 422) {
-    super(code);
-    this.code = code;
-    this.status = status;
-  }
-}
-const fail = (code, status) => {
-  throw new DomainError(code, status);
-};
-export class Sku {
-  constructor(value) {
-    this.value = String(value ?? '')
-      .trim()
-      .toUpperCase();
-    if (!/^[A-Z0-9][A-Z0-9-]{1,31}$/.test(this.value)) fail('INVALID_SKU');
-    Object.freeze(this);
-  }
-}
-export class Quantity {
-  constructor(value, { positive = false } = {}) {
-    this.value = Number(value);
-    if (!Number.isSafeInteger(this.value) || this.value < 0 || (positive && this.value === 0))
-      fail('INVALID_QUANTITY');
-    Object.freeze(this);
-  }
-}
-export class Money {
-  constructor(value) {
-    const n = Number(value);
-    if (
-      !Number.isFinite(n) ||
-      n < 0 ||
-      n > 100000000 ||
-      Math.abs(n * 100 - Math.round(n * 100)) > 0.00001
-    )
-      fail('INVALID_MONEY');
-    this.cents = Math.round(n * 100);
-    this.currency = 'PEN';
-    Object.freeze(this);
-  }
-  get value() {
-    return this.cents / 100;
-  }
-}
-export class Address {
-  constructor(value) {
-    this.value = String(value ?? '').trim();
-    if (this.value.length < 5 || this.value.length > 240) fail('INVALID_ADDRESS');
-    Object.freeze(this);
-  }
-}
+export { DomainError, Sku, Quantity, Money, Address } from './value-objects.mjs';
+import { DomainError, Sku, Quantity, Money, Address, fail } from './value-objects.mjs';
+import { InventoryItem } from './domain/inventory-item.mjs';
+import { SaleSummary } from './domain/sale-summary.mjs';
+import { DispatchManifest } from './domain/dispatch-manifest.mjs';
 const text = (v, min = 2, max = 160) => {
   const s = String(v ?? '').trim();
   if (s.length < min || s.length > max) fail('INVALID_TEXT');
@@ -115,7 +68,7 @@ export async function normalizeBody(body, path) {
 }
 export async function seed() {
   const s = {
-    version: 1,
+    version: 2,
     ...Object.fromEntries(
       Object.values(tables)
         .flat()
@@ -218,6 +171,11 @@ const safeUser = (u) => ({
 export function handle(state, method, path, body = {}, token = '') {
   try {
     const draft = structuredClone(state);
+    if (!draft.sales_receipts && draft.receipts_sales) {
+      draft.sales_receipts = draft.receipts_sales;
+      delete draft.receipts_sales;
+    }
+    draft.version = 2;
     const result = execute(draft, method, path, body, token);
     return {
       status: typeof result.status === 'number' ? result.status : 200,
@@ -245,7 +203,10 @@ function execute(s, method, path, b, token) {
   const findProduct = (key) => get('products', key);
   const move = (p, delta, type, reason) => {
     if (!Number.isSafeInteger(delta) || p.quantity + delta < 0) fail('INSUFFICIENT_STOCK', 409);
-    p.quantity += delta;
+    const aggregate = new InventoryItem(p);
+    if (delta > 0) aggregate.receive(delta);
+    else aggregate.issue(-delta);
+    p.quantity = aggregate.quantity.value;
     add('stock_movements', {
       productId: p.id,
       delta,
@@ -311,7 +272,8 @@ function execute(s, method, path, b, token) {
         .filter(
           (sale) =>
             sale.status === 'CONFIRMED' &&
-            !list('dispatch_lines').some((l) => l.saleId === sale.id),
+            !list('dispatch_lines').some((l) => l.saleId === sale.id) &&
+            !list('returns').some((r) => r.saleId === sale.id),
         )
         .map((sale) => ({ id: sale.id, number: sale.number })),
     };
@@ -358,7 +320,7 @@ function execute(s, method, path, b, token) {
       items = items.map((sale) => ({
         ...sale,
         lines: list('sale_lines').filter((l) => l.saleId === sale.id),
-        receipt: list('receipts_sales').find((r) => r.saleId === sale.id),
+        receipt: list('sales_receipts').find((r) => r.saleId === sale.id),
       }));
     if (resource === 'dispatches')
       items = items.map((d) => ({
@@ -469,11 +431,10 @@ function execute(s, method, path, b, token) {
         qty = new Quantity(input.quantity, { positive: true }).value;
       if (seen.has(p.id)) fail('DUPLICATE_LINE');
       seen.add(p.id);
-      if (p.conservation !== 'GOOD') fail('PRODUCT_BLOCKED', 409);
-      if (qty > p.quantity) fail('INSUFFICIENT_STOCK', 409);
+      new InventoryItem(p).ensureSellable(qty);
       return { product: p, quantity: qty };
     });
-    const totalCents = lines.reduce((n, l) => n + new Money(l.product.price).cents * l.quantity, 0);
+    const totalCents = new SaleSummary(lines).total.cents;
     const sale = add('sales', {
       number: `SO-${String(list('sales').length + 1).padStart(4, '0')}`,
       status: 'CONFIRMED',
@@ -493,7 +454,7 @@ function execute(s, method, path, b, token) {
       move(p, -quantity, 'SALE', sale.number);
     }
     add('payments', { saleId: sale.id, amount: sale.total, method: 'DEMO', createdAt: now() });
-    add('receipts_sales', {
+    add('sales_receipts', {
       saleId: sale.id,
       number: `DEMO-${sale.number}`,
       total: sale.total,
@@ -510,6 +471,8 @@ function execute(s, method, path, b, token) {
     for (const line of list('sale_lines').filter((l) => l.saleId === key))
       move(findProduct(line.productId), line.quantity, 'CANCELLATION', sale.number);
     sale.status = 'CANCELLED';
+    sale.cancellationReason = text(b.reason ?? 'Demo cancellation');
+    sale.cancelledAt = now();
     return sale;
   }
   if (resource === 'dispatches' && method === 'POST' && !key) {
@@ -524,6 +487,8 @@ function execute(s, method, path, b, token) {
       )
     )
       fail('SALE_DISPATCHED', 409);
+    if (sales.some((sale) => list('returns').some((r) => r.saleId === sale.id)))
+      fail('SALE_HAS_RETURN', 409);
     const d = add('dispatches', {
       number: `DP-${String(list('dispatches').length + 1).padStart(4, '0')}`,
       driverId: b.driverId,
@@ -537,6 +502,7 @@ function execute(s, method, path, b, token) {
         add('dispatch_lines', {
           dispatchId: d.id,
           saleId: sale.id,
+          saleLineId: line.id,
           productId: line.productId,
           quantity: line.quantity,
         });
@@ -546,7 +512,7 @@ function execute(s, method, path, b, token) {
   if (resource === 'dispatches' && method === 'PATCH' && key && !action) {
     const d = get('dispatches', key);
     const next = { PENDING: 'IN_TRANSIT', IN_TRANSIT: 'DELIVERED' }[d.status];
-    if (b.status !== next) fail('INVALID_TRANSITION', 409);
+    if (!next || b.status !== next) fail('INVALID_TRANSITION', 409);
     if (
       next === 'IN_TRANSIT' &&
       list('dispatches').some(
@@ -566,7 +532,9 @@ function execute(s, method, path, b, token) {
         createdAt: now(),
       });
     }
-    d.status = next;
+    const manifest = new DispatchManifest(d);
+    manifest.transition(next);
+    d.status = manifest.status;
     return d;
   }
   if (resource === 'dispatches' && method === 'POST' && action === 'incidents') {
@@ -583,6 +551,12 @@ function execute(s, method, path, b, token) {
   if (resource === 'returns' && method === 'POST' && !key) {
     const sale = get('sales', b.saleId);
     if (sale.status !== 'CONFIRMED') fail('INVALID_STATUS');
+    if (
+      list('dispatch_lines').some(
+        (l) => l.saleId === sale.id && get('dispatches', l.dispatchId).status !== 'DELIVERED',
+      )
+    )
+      fail('INVALID_TRANSITION', 409);
     const line = get('sale_lines', b.saleLineId);
     if (line.saleId !== sale.id) fail('NOT_FOUND', 404);
     const qty = new Quantity(b.quantity, { positive: true }).value;
