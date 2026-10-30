@@ -1,6 +1,9 @@
 import { Injectable, signal } from '@angular/core';
 const en: Record<string, string> = {
   app: 'AI-ToDu',
+  type: 'Movement type',
+  passwordHint: 'At least 8 characters',
+  backWorkspace: 'Back to workspace',
   overview: 'Overview',
   inventory: 'Inventory',
   purchases: 'Purchasing',
@@ -183,9 +186,7 @@ const en: Record<string, string> = {
 };
 @Injectable({ providedIn: 'root' })
 export class I18n {
-  readonly lang = signal<'en_US' | 'es_419'>(
-    localStorage.getItem('ai-todu-language') === 'es_419' ? 'es_419' : 'en_US',
-  );
+  readonly lang = signal<'en_US'|'es_419'>(new URLSearchParams(location.search).get('lang')==='es_419'?'es_419':new URLSearchParams(location.search).get('lang')==='en_US'?'en_US':localStorage.getItem('ai-todu-language')==='es_419'?'es_419':'en_US');
   private spanish: Record<string, string> = {};
   t(key: string): string {
     return (this.lang() === 'es_419' ? this.spanish[key] : undefined) ?? en[key] ?? key;

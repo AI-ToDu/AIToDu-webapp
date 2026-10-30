@@ -9,7 +9,7 @@ import { UI } from './ui';
     <span class="eyebrow">AI-ToDu / TB1</span>
     <h1>{{ i.t('legalTitle') }}</h1>
     <p>{{ i.t('legalText') }}</p>
-    <a mat-stroked-button routerLink="/">{{ i.t('back') }}</a>
+    <a mat-stroked-button routerLink="/">{{ i.t('backWorkspace') }}</a>
   </section>`,
 })
 export class LegalPage {

@@ -16,7 +16,7 @@ import { I18n } from './shared/application/i18n';
     RouterLinkActive,
     MatSidenavModule,
   ],
-  template: `<a class="skip-link" href="#main-content">{{ i.t('back') }}</a
+  template: `<a class="skip-link" href="#main-content" (click)="focusMain($event)">{{ i.t('back') }}</a
     ><mat-sidenav-container class="shell"
       ><mat-sidenav
         #drawer
@@ -72,6 +72,7 @@ import { I18n } from './shared/application/i18n';
     >`,
 })
 export class AppComponent {
+ focusMain(event:Event){event.preventDefault();document.getElementById('main-content')?.focus();}
   readonly session = inject(Session);
   readonly i = inject(I18n);
   private router = inject(Router);

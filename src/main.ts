@@ -2,9 +2,12 @@ import { bootstrapApplication } from '@angular/platform-browser';
 import { appConfig } from './app/app.config';
 import { AppComponent } from './app/app.component';
 async function start() {
-  const httpDemo =
-    new URLSearchParams(location.search).get('api') === 'http' &&
-    ['localhost', '127.0.0.1'].includes(location.hostname);
+  const query=new URLSearchParams(location.search);
+  const local=['localhost','127.0.0.1'].includes(location.hostname);
+  if(local&&query.get('api')==='http')sessionStorage.setItem('ai-todu-transport','http');
+  if(query.get('lang')==='en_US'||query.get('lang')==='es_419')localStorage.setItem('ai-todu-language',query.get('lang')!);
+  if(query.get('role')==='warehouse')sessionStorage.setItem('ai-todu-demo-role','warehouse');
+  const httpDemo=local&&sessionStorage.getItem('ai-todu-transport')==='http';
   if (!httpDemo) {
     if (!('serviceWorker' in navigator))
       throw new Error('This demo needs Service Worker support. Use the local HTTP demo instead.');

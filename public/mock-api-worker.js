@@ -61,6 +61,7 @@ async function respond(request, path) {
   }
 }
 self.addEventListener('fetch', (event) => {
+  if(['localhost','127.0.0.1'].includes(self.location.hostname)&&event.request.headers.get('X-AI-ToDu-Transport')==='http') return;
   const url = new URL(event.request.url);
   const prefix = new URL('api/v1', self.registration.scope).pathname;
   if (

@@ -7,13 +7,16 @@ const guard: CanActivateFn = (route) => {
   if (!session.user()) return router.createUrlTree(['/login']);
   return session.can(route.data['section']) || router.createUrlTree(['/' + session.firstRoute()]);
 };
+const guest: CanActivateFn = () => {const session=inject(Session);return !session.user() || inject(Router).createUrlTree(['/'+session.firstRoute()]);};
 export const routes: Routes = [
   {
     path: 'login',
+    canActivate:[guest],
     loadComponent: () => import('./iam/presentation/auth-page').then((m) => m.AuthPage),
   },
   {
     path: 'register',
+    canActivate:[guest],
     data: { register: true },
     loadComponent: () => import('./iam/presentation/auth-page').then((m) => m.AuthPage),
   },
