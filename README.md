@@ -1,40 +1,131 @@
-# AI-ToDu · Logistics workspace
+# 🚀 AI-ToDu - Sistema Nervioso Logístico B2B
 
-TB1 correction · v0.2.0 · Angular 22 + Angular Material · **en_US / es_419**.
+![Angular](https://img.shields.io/badge/Angular_22-DD0031?style=for-the-badge&logo=angular&logoColor=white)
+![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white)
+![Angular Material](https://img.shields.io/badge/Angular_Material-DD0031?style=for-the-badge&logo=angular&logoColor=white)
+![GitHub Pages](https://img.shields.io/badge/GitHub%20Pages-222222?style=for-the-badge&logo=github&logoColor=white)
 
-The workspace connects receiving, inventory movements, sales, dispatches, returns and derived metrics through a persistent **Fake REST API**. Use fictional data; no actual payments or fiscal documents are issued.
+**AI-ToDu** es una plataforma SaaS B2B diseñada para conectar las ventas, los inventarios y los despachos logísticos de pequeños negocios. Este repositorio contiene el **Frontend**, desarrollado con Angular y Angular Material.
 
-```sh
-npm ci
-npm run demo
+### 🌍 [Ver Demo en Vivo (GitHub Pages)](https://ai-todu.github.io/ai-todu-webapp/)
+
+> **Nota para evaluación:** la revisión TB1 **v0.2.0** utiliza una **Fake REST API persistente**. El recorrido local usa HTTP y almacenamiento JSON; la alternativa estática usa Service Worker e IndexedDB. Se trabaja con datos ficticios, sin pagos reales ni comprobantes fiscales. Java/Spring Boot, PostgreSQL y seguridad de producción pertenecen a una fase posterior. La versión pública debe contrastarse con la rama de revisión antes de presentarla.
+
+---
+
+## 🏗️ Arquitectura del Proyecto
+
+La aplicación organiza sus responsabilidades siguiendo principios de **Domain-Driven Design (DDD)**, con **Angular 22**, Standalone Components, Signals, HttpClient y rutas con carga por área. Los módulos agrupan capacidades de negocio; su grado de separación se documenta en el informe.
+
+* 📦 **Inventory:** catálogo de SKUs, conservación del producto, entradas, salidas e historial de movimientos.
+* 🚚 **Logistics:** manifiestos vinculados a ventas, conductor, vehículo, destino, estados y confirmación del receptor.
+* 📥 **Procurement:** órdenes de compra y recepción física parcial.
+* 🛒 **Sales:** POS, validación de stock, recibo histórico de demostración y devoluciones.
+* 🔔 **Notifications:** bandeja de avisos operativos.
+* 🔐 **IAM:** acceso, perfiles demo, autorización y protección de rutas.
+* 📊 **Reporting:** indicadores derivados de operaciones registradas.
+* ⚙️ **Shared:** modelos, adaptador HTTP, componentes comunes e internacionalización.
+
+### Estructura de Directorios (DDD)
+
+```text
+src/app/
+ ├── inventory/         # Inventario y movimientos
+ ├── logistics/         # Despachos y entrega
+ ├── procurement/       # Compras y recepción
+ ├── sales/             # POS, recibos y devoluciones
+ ├── notifications/     # Bandeja operativa
+ ├── iam/               # Acceso y equipo
+ ├── reporting/         # Resumen operativo
+ └── shared/
+     ├── application/   # Internacionalización
+     ├── domain/        # Modelos compartidos
+     ├── infrastructure/# Adaptador HTTP
+     └── presentation/  # UI y páginas comunes
+
+public/mock/            # Copia trazable del motor canónico
+tools/                  # Servidor demo, sincronización y pruebas
+database/               # Modelo relacional de referencia
 ```
 
-Open `http://127.0.0.1:8850/?api=http`. This builds the app and serves both the interface and the local HTTP adapter. Node 24+ is required. State persists in `.demo-data/state.json`, excluded from Git; reload and server restart preserve accepted transactions. The local HTTP choice survives hash navigation/reload within the tab.
+Los módulos funcionales contienen sus vistas en `presentation/`. El motor de demostración y sus reglas se mantienen en el repositorio canónico de la Fake API; el árbol no implica que todos los módulos tengan cuatro capas ya implementadas.
 
-For static hosting run `npm run build:pages`. On HTTPS/localhost the Service Worker intercepts same-origin `/api/v1` requests and persists to IndexedDB. Data is local to that browser/origin, can be cleared, and is not shared across devices. The Pages API URL is not a remote backend for curl. First load requires assets/worker initialization; failures show a visible startup error.
+---
 
-## Demo accounts
+## 🛠️ Tecnologías y Prácticas Implementadas
 
-| Role | Email | Access |
+* **Framework:** Angular 22 con Standalone Components, Signals y HttpClient.
+* **Interfaz:** Angular Material, diseño responsive, diálogos y controles etiquetados.
+* **Internacionalización:** inglés predeterminado (`en_US`) y español latinoamericano (`es_419`).
+* **Persistencia demo:** JSON por HTTP local o IndexedDB en el navegador, según el transporte elegido.
+* **Reglas operativas:** recepción parcial, rechazo de sobreventa, conservación de productos, anulación y devoluciones con validaciones.
+* **Calidad:** pruebas de dominio, permisos/tenant, concurrencia HTTP, persistencia tras reinicio, migración de recibos y cobertura de traducciones.
+
+---
+
+## 🚀 Despliegue Local (Para Desarrolladores)
+
+**Requisito:** Node.js 24 o posterior.
+
+1. Clona la rama de revisión:
+
+   ```sh
+   git clone --branch fix/tb1-readiness https://github.com/AI-ToDu/ai-todu-webapp.git
+   cd ai-todu-webapp
+   ```
+
+2. Instala las dependencias desde el lockfile:
+
+   ```sh
+   npm ci
+   ```
+
+3. Ejecuta la demostración integrada:
+
+   ```sh
+   npm run demo
+   ```
+
+4. Abre [http://127.0.0.1:8850/?api=http](http://127.0.0.1:8850/?api=http). El comando compila la interfaz y sirve el adaptador HTTP en el mismo puerto.
+
+El estado se conserva en `.demo-data/state.json`, excluido de Git. La recarga y el reinicio del servidor conservan las transacciones aceptadas. La selección HTTP persiste al navegar o recargar dentro de la pestaña.
+
+### Publicación estática
+
+```sh
+npm run build:pages
+```
+
+En HTTPS o localhost, un Service Worker intercepta las solicitudes del mismo origen a `/api/v1` y guarda el estado en IndexedDB. La información pertenece a ese navegador/origen, puede eliminarse y no se comparte entre dispositivos. La URL de Pages no es un backend remoto consultable con curl. La primera carga requiere inicializar los recursos y el worker; los fallos se muestran en la interfaz.
+
+---
+
+## 🔐 Cuentas de Demostración
+
+| Rol | Correo | Acceso demo |
 | --- | --- | --- |
-| Administrator | admin@demo.ai-todu.test | All demo sections and metrics. |
-| Warehouse | warehouse@demo.ai-todu.test | Inventory, movements, purchasing and notifications. |
-| Sales | sales@demo.ai-todu.test | Inventory, sales, returns and notifications. |
-| Logistics | logistics@demo.ai-todu.test | Inventory, dispatches and notifications. |
+| Administrador | admin@demo.ai-todu.test | Secciones de la demo e indicadores. |
+| Almacén | warehouse@demo.ai-todu.test | Inventario, movimientos, compras y avisos. |
+| Ventas | sales@demo.ai-todu.test | Inventario, ventas, devoluciones y avisos. |
+| Logística | logistics@demo.ai-todu.test | Inventario, despachos y avisos. |
 
-All four intentionally public demo accounts use **DemoOnly2026!**. These identities, hashes, session storage and authorization checks are demonstration infrastructure, not production security.
+Las cuatro cuentas usan la contraseña de prueba intencionalmente pública **DemoOnly2026!**. Las identidades, hashes y sesiones son infraestructura de demostración, sin equivalencia con seguridad de producción.
 
-## Review the integrated flow
+## 🔄 Recorrido Integrado de Ejemplo
 
-1. Purchasing: create an order for four rice units and receive two. State becomes partially received; stock changes 8 → 10.
-2. Sales: sell two units. Stock changes 10 → 8; historical demo receipt records PEN 290.
-3. Dispatches: select that sale, driver, vehicle and destination. Start route, then confirm a recipient. A dispatch never issues stock a second time.
-4. Overview: net sales PEN 290, gross contribution PEN 70, inventory at recorded cost PEN 1,510. Reload retains the result. These are synthetic data, not business outcomes.
-5. Try excess receiving, oversale, damaged/quarantined product, repeated cancellation, occupied resources and a direct unauthorized metrics request. Rejected commands leave no partial state.
+Con el estado inicial de demostración:
 
-![Local HTTP flow, synthetic demo data](docs/evidence/overview.jpg)
+1. Crear una compra de cuatro unidades de arroz y recibir dos: el stock cambia de **8 a 10** y la orden queda parcialmente recibida.
+2. Vender dos unidades: el stock cambia de **10 a 8** y el recibo histórico registra **PEN 290**.
+3. Seleccionar la venta, conductor, vehículo y destino; iniciar ruta y confirmar receptor. El despacho no descuenta stock por segunda vez.
+4. Consultar el resumen: ventas netas **PEN 290**, contribución bruta **PEN 70** y existencias al costo registrado **PEN 1,510**. La recarga conserva el resultado.
+5. Comprobar rechazo de exceso de recepción, sobreventa, producto bloqueado, anulación repetida, recursos ocupados y consulta no autorizada de indicadores.
 
-## Verification and scope
+Son datos sintéticos de prueba, no resultados comerciales reales.
+
+![Recorrido HTTP local con datos ficticios](docs/evidence/overview.jpg)
+
+## ✅ Verificación y Alcance
 
 ```sh
 npm test
@@ -42,16 +133,46 @@ npm run build
 npm run build:pages
 ```
 
-Tests cover domain rules, direct authorization/tenant isolation, actual HTTP concurrency, restart persistence, receipt migration, the 35-table SQL design, translation coverage and vendored-source integrity. Production compilation retains the original bundle budget. UI is lazy by domain, responsive, labelled and supports reduced motion; user research and a full accessibility audit remain pending.
+Las pruebas cubren reglas, aislamiento por empresa/rol, concurrencia HTTP real, persistencia, recibos, el diseño SQL de 35 tablas, traducciones e integridad de las fuentes copiadas. La compilación mantiene el presupuesto original del bundle. La investigación con usuarios y una auditoría completa de accesibilidad siguen pendientes.
 
-The [35-table DDL](database/schema.sql) is a normalized relational migration target, validated in SQLite. The running prototype uses 35 JSON collections. Full lot/location/variant workflows, multiple delivery stops/failed attempts, customer administration UI, employee activation/recovery, subscription/fiscal/payment integrations and Java/PostgreSQL production services are not complete.
+El [DDL de 35 tablas](database/schema.sql), validado en SQLite, es un destino de migración relacional; la demo usa 35 colecciones JSON. Aún faltan flujos completos de lotes/ubicaciones/variantes, múltiples paradas e intentos, administración de clientes, activación/recuperación de empleados, suscripciones, integraciones fiscales/de pago y servicios productivos Java/PostgreSQL.
 
-## Canonical mock source
+### Fuente Canónica de la Fake API
 
-[ai-todu-fake-api](https://github.com/AI-ToDu/ai-todu-fake-api/tree/fix/tb1-readiness) owns the engine, local adapter, OpenAPI and relational baseline. [mock-provenance.json](mock-provenance.json) pins the exact source commit and normalized file hashes. After committing changes there, run `npm run mock:sync -- ../ai-todu-fake-api`, then tests/build here. Do not independently patch a vendored file. [Bundled OpenAPI](public/mock/openapi.json) is the implemented demo contract.
+[ai-todu-fake-api](https://github.com/AI-ToDu/ai-todu-fake-api/tree/fix/tb1-readiness) mantiene el motor, adaptador HTTP, OpenAPI y base relacional. [mock-provenance.json](mock-provenance.json) fija el commit y los hashes normalizados. Tras modificar y confirmar el motor allí, sincronizar desde este repositorio:
 
-## Branches and publication
+```sh
+npm run mock:sync -- ../ai-todu-fake-api
+```
 
-`fix/tb1-readiness` contains four correction blocks, one commit each. `develop` starts at the preserved original main baseline; review the fix PR before integration. Release from reviewed `main`. Verification runs on fix/PR; Pages deployment is restricted to main. The current public site still uses the old `gh-pages` source until review and an explicit switch to GitHub Actions. There is no automatic production deployment from this fix branch.
+Después ejecutar pruebas y compilación. Las copias del motor se actualizan mediante esa sincronización. El [OpenAPI incluido](public/mock/openapi.json) describe el contrato demo implementado.
 
-Links: [Landing](https://ai-todu.github.io/ai-todu-platform/) · [Workspace](https://ai-todu.github.io/ai-todu-webapp/) · [Report](https://github.com/AI-ToDu/ai-todu-report/tree/fix/tb1-readiness) · [Review checklist](REVIEW.md).
+### Ramas y Publicación
+
+La revisión se mantiene en `fix/tb1-readiness`. `develop` conserva la base inicial y la publicación del frontend revisado se realiza desde `main` tras la integración. El workflow verifica fix/PR y restringe Pages a main. La configuración pública registrada utilizaba `gh-pages`; comprobar su origen y el cambio a Actions antes de dar por publicada esta revisión. Consultar [REVIEW.md](REVIEW.md).
+
+---
+
+## 🔗 Ecosistema del Proyecto
+
+* **[Landing Page](https://github.com/AI-ToDu/ai-todu-platform/tree/fix/tb1-readiness):** presentación del producto y acceso a la demo.
+* **[Frontend](https://github.com/AI-ToDu/ai-todu-webapp/tree/fix/tb1-readiness):** espacio de trabajo Angular.
+* **[Fake REST API](https://github.com/AI-ToDu/ai-todu-fake-api/tree/fix/tb1-readiness):** motor canónico de demostración y contrato OpenAPI.
+* **[Informe](https://github.com/AI-ToDu/ai-todu-report/tree/fix/tb1-readiness):** requisitos, arquitectura, diseño de datos y evidencias.
+
+---
+
+## 👥 Equipo de Desarrollo
+
+Proyecto desarrollado por **IA-INNOVATION**:
+
+* **Kevin Junior Salazar Marquina:** arquitectura base, recursos compartidos y enrutamiento del frontend inicial.
+* **Fernando André Condezo Pacheco:** módulo de inventario del frontend inicial.
+* **Darikson Bill Salazar Quiche:** POS y dashboard del frontend inicial.
+* **Luis Carlos Chui Kcomt:** módulo de logística del frontend inicial.
+* **Carlos Alberto Bernal Torres:** IAM y documentación del frontend inicial.
+
+Las contribuciones históricas y sus fuentes se registran en el informe. Las mejoras posteriores se acreditan con sus commits y revisiones correspondientes.
+
+---
+*Desarrollado por el equipo IA-INNOVATION · AI-ToDu · UPC · 2026.*
